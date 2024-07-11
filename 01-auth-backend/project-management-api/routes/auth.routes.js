@@ -2,11 +2,9 @@ const express = require("express");
 const bcrypt = require("bcryptjs"); // Used for encrypting passwords
 const jwt = require("jsonwebtoken"); // Used for creating, signing and verifying JWTs
 const User = require("./../models/User.model");
-
 const { isAuthenticated } = require("./../middleware/jwt.middleware");
 
 const router = express.Router();
-
 const saltRounds = 10;
 
 

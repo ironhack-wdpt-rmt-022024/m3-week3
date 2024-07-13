@@ -35,76 +35,76 @@ router.get("/projects", isAuthenticated, async (req, res, next) => {
     catch (error) {
         next(err);
     }
-    
 })
 
 //  GET   /api/projects/:projectId - Get one project doc by its id
-router.get("/projects/:projectId", isAuthenticated, (req, res, next)  => {
-    // Get the document id
-    const projectId = req.params.projectId;
-
-    // Check/validate the ObjectId passed in the request
-    if ( mongoose.Types.ObjectId.isValid(projectId) === false ) {
-        res.status(400).json({  message: "Specified id is not valid" })
-        return;
+router.get("/projects/:projectId", isAuthenticated, async (req, res, next)  => {
+    try {
+        // Get the document id
+        const projectId = req.params.projectId;
+    
+        // Check/validate the ObjectId passed in the request
+        if ( mongoose.Types.ObjectId.isValid(projectId) === false ) {
+            res.status(400).json({  message: "Specified id is not valid" })
+            return;
+        }
+    
+        const oneProject = await Project.findById(projectId).populate("tasks");
+        res.json(oneProject);
     }
-
-    Project.findById(projectId)
-      .populate("tasks")
-      .then((oneProject) => {
-        res.json(oneProject)
-      })
-      .catch((err) => {
+    catch (error) {
         next(err)
-      })
+    }
 })
 
 
 // PUT  /api/projects/:projectId  -  Update a specific project by id
-router.put("/projects/:projectId", isAuthenticated, (req, res, next) => {
-    // Get the document id
-    const projectId = req.params.projectId;
+router.put("/projects/:projectId", isAuthenticated, async (req, res, next) => {
+    try {
+        // Get the document id
+        const projectId = req.params.projectId;
+    
+        // Check/validate the ObjectId passed in the request
+        if ( mongoose.Types.ObjectId.isValid(projectId) === false ) {
+            res.status(400).json({  message: "Specified id is not valid" })
+            return;
+        }
+    
+        // Get the values from the request body for update
+        const { title, description } = req.body;
+    
+        // Find the project document by id and update it
+        const updatedProject = await Project.findByIdAndUpdate(
+            projectId,
+            { title: title, description: description },
+            { new: true } // Tells mongoose to return the updated version of the document
+        )
 
-    // Check/validate the ObjectId passed in the request
-    if ( mongoose.Types.ObjectId.isValid(projectId) === false ) {
-        res.status(400).json({  message: "Specified id is not valid" })
-        return;
-    }
-
-    // Get the values from the request body for update
-    const { title, description } = req.body;
-
-    Project.findByIdAndUpdate(
-        projectId,
-        { title: title, description: description },
-        { new: true } // Tells mongoose to return the updated version of the document
-    )
-    .then((updatedProject) => {
         res.json(updatedProject); // Status Code 200 - Success
-    })
-    .catch((err) => {
+    }
+    catch (error) {
         next(err);
-    })
+    }
 })
 
 
 // DELETE  /api/projects/:projectId  -  Delete a specific project by id
-router.delete("/projects/:projectId", isAuthenticated, (req, res, next) => {
-  const projectId = req.params.projectId;
-
-    // Check/validate the ObjectId passed in the request
-    if ( mongoose.Types.ObjectId.isValid(projectId) === false ) {
-        res.status(400).json({  message: "Specified id is not valid" })
-        return;
-    }  
-
-  Project.findByIdAndDelete(projectId)
-    .then((deletedProject) => {
+router.delete("/projects/:projectId", isAuthenticated, async (req, res, next) => {
+    try {
+        const projectId = req.params.projectId;
+      
+          // Check/validate the ObjectId passed in the request
+          if ( mongoose.Types.ObjectId.isValid(projectId) === false ) {
+              res.status(400).json({  message: "Specified id is not valid" })
+              return;
+          }  
+      
+        const deletedProject = await Project.findByIdAndDelete(projectId);
         res.status(204).send(); // 204 No Content
-    })
-    .catch((err) => {
+    }
+    catch (error) {
         next(err);
-    })
+    }
 })
 
 module.exports = router;

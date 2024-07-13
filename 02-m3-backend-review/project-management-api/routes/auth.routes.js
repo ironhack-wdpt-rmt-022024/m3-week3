@@ -27,7 +27,7 @@ router.post("/signup", async (req, res, next) => {
         }
 
         // Check if the user with the given email already exists
-        const foundUser = await User.find({ email: email });
+        const foundUser = await User.findOne({ email: email });
 
         if (foundUser) {
             res.status(400).json({ message: "User already exists" });
@@ -96,25 +96,25 @@ router.post("/signup", async (req, res, next) => {
 
 
 // POST /auth/login
-router.post("/login", (req, res, next) => {
-    const { email, password } = req.body;
+router.post("/login", async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
 
-    if (email === '' || password ===  '') {
-        res.status(400).json({ message: "Provide email and password" });
-        return;
-    }
-
-    // Check the users collection if the user with the email address exists
-    User.findOne({ email: email })
-      .then((foundUser) => {
+        if (email === '' || password ===  '') {
+            res.status(400).json({ message: "Provide email and password" });
+            return;
+        }
+    
+        // Check the users collection if the user with the email address exists
+        const foundUser = await User.findOne({ email: email })
         if (!foundUser) {
             res.status(401).json({ message: "User not found" });
             return;
         }
-
-        // Compare the password with the one the password saved in the DB for the user
-        const passwordCorrect = bcrypt.compareSync(password, foundUser.password);
-
+    
+        // Compare the password (asynchronously) with the one the password saved in the DB for the user
+        const passwordCorrect = await bcrypt.compare(password, foundUser.password);
+    
         if (passwordCorrect) {
             // Prepare the user data to include in the token
             const { email, name, _id } = foundUser;
@@ -122,21 +122,18 @@ router.post("/login", (req, res, next) => {
             const user = { email, name, _id };
 
             // Create and sign a JWT token
-            const authToken = jwt.sign(
-                user,
-                process.env.TOKEN_SECRET,
-                { algorithm: 'HS256', expiresIn: "90d" }
-            )
+            const authToken = jwt.sign(user, process.env.TOKEN_SECRET, { algorithm: 'HS256', expiresIn: "90d" })
 
             // Send back the JWT token in the response
             res.status(200).json({ authToken: authToken });
         } else {
             res.status(400).json({ message: "Unable to authorize the user" })
         }
-      })
-      .catch((err) => {
+
+    }
+    catch (error) {
         next(err)
-      })
+    }
 })
 
 
